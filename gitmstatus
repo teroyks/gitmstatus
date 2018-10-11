@@ -60,13 +60,13 @@ parser = argparse.ArgumentParser(
     description='List status of git repositories.')
 pc = ParserAndCompletion(parser)
 pc.add_arg('-d', '--debug', action='store_true',
-           help="Print 'git status' output.")
+           help="print 'git status' output")
 pc.add_arg('-f', '--fetch', action='store_true',
-           help="Do a 'git fetch' before status.")
+           help="do a 'git fetch' before status")
 pc.add_arg('-p', '--pull', action='store_true',
-           help="Git pull branches that are behind origin.")
+           help="pull branches behind origin instead of showing the status")
 pc.add_arg('--completion', action='store_true',
-           help="Output fish shell completion commands.")
+           help="output fish shell completion commands")
 
 args = parser.parse_args()
 
