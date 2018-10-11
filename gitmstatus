@@ -77,7 +77,7 @@ if args.completion:
 
 def repo_status(path):
     fetch_cmd = 'git fetch ;' if args.fetch else ''
-    cmd = f'cd {path} ; {fetch_cmd} git status -vv --'
+    cmd = f'cd {path} ; {fetch_cmd} git status --'
 
     out = subprocess.getoutput(cmd)
     if args.debug:
