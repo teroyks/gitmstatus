@@ -35,16 +35,14 @@ class Flag:
     unknown = '⁉️'
 
 
-class ParserAndCompletion:
-    def __init__(self, parser):
-        self.parser = parser
-        self.completions = []
-        self.program_name = os.path.basename(sys.argv[0])
+_program_name = os.path.basename(sys.argv[0])
+_completions = []
 
-    def add_arg(self, *args, **kwargs):
-        self.parser.add_argument(*args, **kwargs)
 
-        completion = f'complete -c {self.program_name} --no-files'
+def complete_argument(func):
+    """Decorates command-line argument parser with fish autocomplete commands"""
+    def wrapper(*args, **kwargs):
+        completion = f'complete -c {_program_name} --no-files'
         for opt in args:
             if opt.startswith('-'):
                 if not opt.startswith('--'):
@@ -53,25 +51,29 @@ class ParserAndCompletion:
                     completion += f' --long-option {opt[2:]}'
         description = kwargs['help']
         completion += f' --description "{description}"'
-        self.completions.append(completion)
+        _completions.append(completion)
+
+        return func(*args, **kwargs)
+    return wrapper
 
 
 parser = argparse.ArgumentParser(
     description='List status of git repositories.')
-pc = ParserAndCompletion(parser)
-pc.add_arg('-d', '--debug', action='store_true',
-           help="print 'git status' output")
-pc.add_arg('-f', '--fetch', action='store_true',
-           help="do a 'git fetch' before status")
-pc.add_arg('-p', '--pull', action='store_true',
-           help="pull branches behind origin instead of showing the status")
-pc.add_arg('--completion', action='store_true',
-           help="output fish shell completion commands")
+add_argument = complete_argument(parser.add_argument)
+
+add_argument('-d', '--debug', action='store_true',
+             help="print 'git status' output")
+add_argument('-f', '--fetch', action='store_true',
+             help="do a 'git fetch' before status")
+add_argument('-p', '--pull', action='store_true',
+             help="pull branches behind origin instead of showing the status")
+add_argument('--completion', action='store_true',
+             help="output fish shell completion commands")
 
 args = parser.parse_args()
 
 if args.completion:
-    print('\n'.join(pc.completions))
+    print('\n'.join(_completions))
     exit()
 
 
