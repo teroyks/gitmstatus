@@ -58,7 +58,18 @@ def complete_argument(func):
 
 
 parser = argparse.ArgumentParser(
-    description='List status of git repositories.')
+    formatter_class=argparse.RawDescriptionHelpFormatter,
+    description='List the status of git repositories.',
+    epilog='''status indicators:
+    ☑️  : local repository is up to date with origin
+    🐌 : local is behind origin
+    🐇 : local is ahead of origin
+    🆕 : repository has new files
+    👀 : repository has modified files
+    📍 : only local repository, no remote
+    ⁉️  : status unknown
+    '''
+)
 add_argument = complete_argument(parser.add_argument)
 
 add_argument('-d', '--debug', action='store_true',
