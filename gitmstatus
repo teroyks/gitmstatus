@@ -12,6 +12,10 @@ import sys
 from multiprocessing import Pool
 
 
+class Config:
+    main_branches = ('master', 'staging', 'master-staging', 'community')
+
+
 class Color:
     green = '\33[32m'
     grey = '\33[90m'
@@ -106,7 +110,7 @@ def repo_status(path):
         color = Color.red
     elif status_flag is not Flag.ok:
         color = Color.blue
-    elif branch in ('master', 'staging', 'master-staging', 'community'):
+    elif branch in Config.main_branches:
         color = Color.green
     else:
         color = ''
