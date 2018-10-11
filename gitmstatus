@@ -1,0 +1,151 @@
+#!/usr/bin/env python3
+#
+# Lists the status of multiple git repositories
+# Handles the repos in parallel
+
+import argparse
+import os
+import re
+import subprocess
+import sys
+
+from multiprocessing import Pool
+
+
+class Color:
+    green = '\33[32m'
+    grey = '\33[90m'
+    red = '\33[31m'
+    blue = '\33[34m'
+    yellow = '\33[33m'
+    end = '\33[0m'
+
+
+class Flag:
+    ok = '☑️'
+    behind = '🐌'
+    ahead = '🐇'
+    new = '🆕'
+    modified = '👀'
+    local = '📍'
+    unknown = '⁉️'
+
+
+class ParserAndCompletion:
+    def __init__(self, parser):
+        self.parser = parser
+        self.completions = []
+        self.program_name = os.path.basename(sys.argv[0])
+
+    def add_arg(self, *args, **kwargs):
+        self.parser.add_argument(*args, **kwargs)
+
+        completion = f'complete -c {self.program_name} --no-files'
+        for opt in args:
+            if opt.startswith('-'):
+                if not opt.startswith('--'):
+                    completion += f' --short-option {opt[1]}'
+                else:
+                    completion += f' --long-option {opt[2:]}'
+        description = kwargs['help']
+        completion += f' --description "{description}"'
+        self.completions.append(completion)
+
+
+parser = argparse.ArgumentParser(
+    description='List status of git repositories.')
+pc = ParserAndCompletion(parser)
+pc.add_arg('-d', '--debug', action='store_true',
+           help="Print 'git status' output.")
+pc.add_arg('-f', '--fetch', action='store_true',
+           help="Do a 'git fetch' before status.")
+pc.add_arg('-p', '--pull', action='store_true',
+           help="Git pull branches that are behind origin.")
+pc.add_arg('--completion', action='store_true',
+           help="Output fish shell completion commands.")
+
+args = parser.parse_args()
+
+if args.completion:
+    print('\n'.join(pc.completions))
+    exit()
+
+
+def repo_status(path):
+    fetch_cmd = 'git fetch ;' if args.fetch else ''
+    cmd = f'cd {path} ; {fetch_cmd} git status -vv --'
+
+    out = subprocess.getoutput(cmd)
+    if args.debug:
+        print(out)
+
+    branch = re.search(r'On branch (\S+)', out).group(1)
+
+    try:
+        status = re.search(r'Your branch is (.*)', out).group(1)
+    except AttributeError:
+        status = ''  # no commits done yet
+
+    status_flag = Flag.unknown  # unknown
+    if status == '':
+        status_flag = Flag.local
+    elif status.startswith('up to date'):
+        status_flag = Flag.ok
+    elif status.startswith('behind'):
+        status_flag = Flag.behind
+    elif status.startswith('ahead'):
+        status_flag = Flag.ahead
+
+    new_files = Flag.new if re.search(
+        r'Untracked files:|new file:', out) else ''
+    modified = Flag.modified if re.search(r'modified:', out) else ''
+
+    if new_files is not '' or modified is not '':
+        color = Color.yellow
+    elif status_flag == Flag.unknown:
+        color = Color.red
+    elif status_flag is not Flag.ok:
+        color = Color.blue
+    elif branch in ('master', 'staging', 'master-staging', 'community'):
+        color = Color.green
+    else:
+        color = ''
+
+    return {
+        'repo': os.path.basename(path),
+        'branch': branch,
+        'path': path,
+        'color': color,
+        'status': status_flag,
+        'new': new_files,
+        'modified': modified,
+        'reset': Color.end
+    }
+
+
+def pull_repo(repo):
+    out = f'{Color.green}Pulling {repo["repo"]}...{Color.end}\n'
+    cmd = 'cd {path} ; git pull'.format(**repo)
+    out += subprocess.getoutput(cmd)
+    out += '\n'
+
+    if args.debug:
+        print(cmd)
+
+    print(out)
+
+
+git_dirs = subprocess.getoutput(
+    'find . -type d -name .git -maxdepth 4').split('\n')
+repos = [os.path.dirname(d) for d in git_dirs]
+
+with Pool(15) as p:
+    status_list = p.map(repo_status, repos)
+
+if args.pull:
+    with Pool(5) as p:
+        p.map(pull_repo, [
+              r for r in status_list if r['status'] == Flag.behind])
+else:
+    for s in sorted(status_list, key=lambda k: k['repo']):
+        print('{color}{repo} {status} {new}{modified} {branch}{reset}'.format(**s))
