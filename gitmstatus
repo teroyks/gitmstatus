@@ -10,6 +10,7 @@ import subprocess
 import sys
 
 from multiprocessing import Pool
+from tqdm import tqdm
 
 
 class Config:
@@ -157,7 +158,8 @@ git_dirs = subprocess.getoutput(
 repos = [os.path.dirname(d) for d in git_dirs]
 
 with Pool(15) as p:
-    status_list = p.map(repo_status, repos)
+    status_list = list(tqdm(p.imap_unordered(
+        repo_status, repos), total=len(repos)))
 
 if args.pull:
     with Pool(5) as p:
