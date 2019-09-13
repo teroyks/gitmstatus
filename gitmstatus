@@ -97,7 +97,10 @@ def repo_status(path):
     if args.debug:
         print(out)
 
-    branch = re.search(r'On branch (\S+)', out).group(1)
+    try:
+        branch = re.search(r'On branch (\S+)', out).group(1)
+    except AttributeError:
+        branch = f'Unknown [{out}]'
 
     try:
         status = re.search(r'Your branch is (.*)', out).group(1)
