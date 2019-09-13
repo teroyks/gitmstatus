@@ -34,7 +34,9 @@ Python 3 needs to be installed and `python3` needs to be somewhere in the path.
 
 The [`tqdm`](https://pypi.org/project/tqdm/) module is used for the progress bar, it needs to be installed either globally or with virtualenv.
 
-    pip3 install tqdm
+```shell
+pip3 install tqdm
+```
 
 ### Script Installation
 
@@ -46,4 +48,6 @@ If you used a local installation for `tqdm`, create an alias or a shell script i
 
 If you use the [fish shell](https://fishshell.com/), the script can print autocomplete definitions for you:
 
-    gitmstatus --completion > ~/.config/fish/completions/gitmstatus.fish
+```shell
+gitmstatus --completion > ~/.config/fish/completions/gitmstatus.fish
+```
