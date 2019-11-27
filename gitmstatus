@@ -121,7 +121,7 @@ def repo_status(path):
         r'Untracked files:|new file:', out) else ''
     modified = Flag.modified if re.search(r'modified:', out) else ''
 
-    if new_files is not '' or modified is not '':
+    if new_files != '' or modified != '':
         color = Color.yellow
     elif status_flag == Flag.unknown:
         color = Color.red
