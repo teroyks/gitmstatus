@@ -51,3 +51,21 @@ If you use the [fish shell](https://fishshell.com/), the script can print autoco
 ```shell
 gitmstatus --completion > ~/.config/fish/completions/gitmstatus.fish
 ```
+
+## Testing with Docker
+
+You can test running the command with Docker without having to install Git, Python, or any PIP packages. _(Note: much slower than running natively, and does not seem to work properly with some repositories – cause unknown.)_
+
+Prerequisites: you need to have [Docker](https://docs.docker.com/install/) installed.
+
+Build the image (in the project root):
+
+```shell
+docker build -t gitmstatus .
+```
+
+Run the command:
+
+```shell
+docker run --rm -t -v $PWD:/tmp gitmstatus
+```
