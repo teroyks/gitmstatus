@@ -158,18 +158,19 @@ def pull_repo(repo):
     print(out)
 
 
-git_dirs = subprocess.getoutput(
-    'find . -type d -name .git -maxdepth 4').split('\n')
-repos = [os.path.dirname(d) for d in git_dirs]
+if __name__ == '__main__':
+    git_dirs = subprocess.getoutput(
+        'find . -type d -name .git -maxdepth 4').split('\n')
+    repos = [os.path.dirname(d) for d in git_dirs]
 
-with Pool(15) as p:
-    status_list = list(tqdm(p.imap_unordered(
-        repo_status, repos), total=len(repos)))
+    with Pool(15) as p:
+        status_list = list(tqdm(p.imap_unordered(
+            repo_status, repos), total=len(repos)))
 
-if args.pull:
-    with Pool(5) as p:
-        p.map(pull_repo, [
-              r for r in status_list if r['status'] == Flag.behind])
-else:
-    for s in sorted(status_list, key=lambda k: k['repo']):
-        print('{color}{repo} {status} {new}{modified} {branch}{reset}'.format(**s))
+    if args.pull:
+        with Pool(5) as p:
+            p.map(pull_repo, [
+                r for r in status_list if r['status'] == Flag.behind])
+    else:
+        for s in sorted(status_list, key=lambda k: k['repo']):
+            print('{color}{repo} {status} {new}{modified} {branch}{reset}'.format(**s))
